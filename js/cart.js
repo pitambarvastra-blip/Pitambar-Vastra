@@ -1,8 +1,10 @@
 // ============================================================
-// STORE SETTINGS — edit these two lines for your business
+// STORE SETTINGS — edit these lines for your business
 // ============================================================
 const SELLER_WHATSAPP_NUMBER = "91XXXXXXXXXX"; // country code + number, no + or spaces
 const CURRENCY_SYMBOL = "₹";
+const STORE_NAME = "Pitambar Vastra";
+const RAZORPAY_KEY_ID = "rzp_live_TFMkT2zdtjR0cM"; // your Razorpay Key ID (safe to be public)
 
 // ============================================================
 // CART STATE (persisted in the browser via localStorage)
@@ -138,27 +140,107 @@ function closeCart() {
 }
 
 // ============================================================
-// CHECKOUT — builds an order summary and opens WhatsApp
+// CHECKOUT — opens Razorpay's live payment popup for the cart total
 // ============================================================
-function checkout() {
-  const entries = Object.entries(cart);
-  if (entries.length === 0) {
-    alert("Your cart is empty.");
-    return;
-  }
+function buildOrderMessage(paymentId) {
+  let message = paymentId
+    ? "Payment received! My order:\n\n"
+    : "Hi! I'd like to order:\n\n";
 
-  let message = "Hi! I'd like to order:\n\n";
-  entries.forEach(([id, qty]) => {
+  Object.entries(cart).forEach(([id, qty]) => {
     const product = PRODUCTS.find(p => p.id === id);
     if (product) {
       message += `- ${product.name} x${qty} = ${CURRENCY_SYMBOL}${product.price * qty}\n`;
     }
   });
   message += `\nTotal: ${CURRENCY_SYMBOL}${cartSubtotal()}`;
-  message += `\n\nPlease send me a payment link. Thank you!`;
 
+  if (paymentId) {
+    message += `\nPayment ID: ${paymentId}`;
+    message += `\n\nPlease share my delivery address with you. Thank you!`;
+  } else {
+    message += `\n\nPlease send me a payment link. Thank you!`;
+  }
+
+  return message;
+}
+
+function openWhatsAppWithOrder(paymentId) {
+  const message = buildOrderMessage(paymentId);
   const url = `https://wa.me/${SELLER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
+}
+
+async function checkout() {
+  const entries = Object.entries(cart);
+  if (entries.length === 0) {
+    alert("Your cart is empty.");
+    return;
+  }
+
+  const checkoutBtn = document.getElementById("checkout-btn");
+  const originalLabel = checkoutBtn.textContent;
+  checkoutBtn.disabled = true;
+  checkoutBtn.textContent = "Starting payment...";
+
+  try {
+    const orderRes = await fetch("/.netlify/functions/create-order", {
+      method: "POST",
+      body: JSON.stringify({ amount: cartSubtotal() })
+    });
+
+    if (!orderRes.ok) {
+      throw new Error("Could not start payment. Please try again in a moment.");
+    }
+
+    const order = await orderRes.json();
+
+    const rzp = new Razorpay({
+      key: RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: "INR",
+      name: STORE_NAME,
+      order_id: order.orderId,
+      theme: { color: "#b08968" },
+      handler: async function (response) {
+        const verifyRes = await fetch("/.netlify/functions/verify-payment", {
+          method: "POST",
+          body: JSON.stringify(response)
+        });
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.valid) {
+          openWhatsAppWithOrder(response.razorpay_payment_id);
+          cart = {};
+          saveCart();
+          renderCart();
+          alert("Payment successful! Please send your delivery address on WhatsApp.");
+        } else {
+          alert(
+            "We couldn't verify this payment automatically. Please contact us on WhatsApp with payment ID: " +
+              response.razorpay_payment_id
+          );
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = originalLabel;
+        }
+      }
+    });
+
+    rzp.on("payment.failed", function () {
+      alert("Payment failed. Please try again, or contact us on WhatsApp.");
+    });
+
+    rzp.open();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = originalLabel;
+  }
 }
 
 // ============================================================

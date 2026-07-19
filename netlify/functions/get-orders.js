@@ -2,6 +2,14 @@
 // visitors can't read your customers' names/phones/addresses.
 const { getStore } = require("@netlify/blobs");
 
+function ordersStore() {
+  return getStore({
+    name: "orders",
+    siteID: process.env.NETLIFY_SITE_ID,
+    token: process.env.NETLIFY_API_TOKEN
+  });
+}
+
 exports.handler = async function (event) {
   try {
     const { password } = JSON.parse(event.body || "{}");
@@ -10,7 +18,7 @@ exports.handler = async function (event) {
       return { statusCode: 401, body: JSON.stringify({ error: "Incorrect password" }) };
     }
 
-    const store = getStore("orders");
+    const store = ordersStore();
     const { blobs } = await store.list();
 
     const orders = await Promise.all(

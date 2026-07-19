@@ -2,6 +2,14 @@
 // database built into Netlify, so no external service is needed.
 const { getStore } = require("@netlify/blobs");
 
+function ordersStore() {
+  return getStore({
+    name: "orders",
+    siteID: process.env.NETLIFY_SITE_ID,
+    token: process.env.NETLIFY_API_TOKEN
+  });
+}
+
 exports.handler = async function (event) {
   try {
     const order = JSON.parse(event.body);
@@ -27,7 +35,7 @@ exports.handler = async function (event) {
       customer: order.customer
     };
 
-    const store = getStore("orders");
+    const store = ordersStore();
     await store.setJSON(orderId, record);
 
     return {

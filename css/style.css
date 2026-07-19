@@ -755,6 +755,21 @@ a {
   border-top: 1px dashed var(--border);
 }
 
+.payment-method-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 14px;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+
+.payment-method-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
 .checkout-btn {
   width: 100%;
   background: var(--accent-deep);
@@ -825,4 +840,60 @@ a {
 
 .footer-policy strong {
   color: var(--accent-deep);
+}
+
+.footer-policy a {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.footer-links {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.footer-links a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.footer-links a:hover {
+  color: var(--accent-deep);
+}
+
+/* Standalone policy pages (Privacy Policy, Terms) */
+.policy-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+}
+
+.policy-page h1 {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+  margin-bottom: 6px;
+}
+
+.policy-updated {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.policy-page h2 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 28px 0 8px;
+}
+
+.policy-page p {
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.7;
+  margin-bottom: 10px;
 }

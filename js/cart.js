@@ -414,12 +414,34 @@ function closeCart() {
 // ============================================================
 // CHECKOUT — opens Razorpay's live payment popup for the cart total
 // ============================================================
-function buildOrderMessage(paymentId) {
+function getSelectedPaymentMethod() {
+  const checked = document.querySelector('input[name="payment-method"]:checked');
+  return checked ? checked.value : "online";
+}
+
+function updateCheckoutUI() {
+  const method = getSelectedPaymentMethod();
+  const btn = document.getElementById("checkout-btn");
+  const note = document.getElementById("checkout-note");
+  if (!btn || !note) return;
+
+  if (method === "cod") {
+    btn.textContent = "Place Order (COD)";
+    note.innerHTML = `Pay in cash when your order is delivered.<br>🪷 3-day returns on unused items.`;
+  } else {
+    btn.textContent = "Pay Now";
+    note.innerHTML = `Secure payment powered by Razorpay. After payment, you'll be asked to share your delivery address on WhatsApp.<br>🪷 3-day returns on unused items.`;
+  }
+}
+
+function buildOrderMessage(paymentId, isCod) {
   const details = getEnteredDetails();
 
   let message = paymentId
     ? "Payment received! My order:\n\n"
-    : "Hi! I'd like to order:\n\n";
+    : isCod
+      ? "Hi! I'd like to place a Cash on Delivery order:\n\n"
+      : "Hi! I'd like to order:\n\n";
 
   Object.entries(cart).forEach(([id, qty]) => {
     const product = PRODUCTS.find(p => p.id === id);
@@ -433,6 +455,8 @@ function buildOrderMessage(paymentId) {
 
   if (paymentId) {
     message += `\nPayment ID: ${paymentId}`;
+  } else if (isCod) {
+    message += `\nPayment Method: Cash on Delivery`;
   }
 
   if (details.name || details.phone || details.address) {
@@ -440,21 +464,29 @@ function buildOrderMessage(paymentId) {
     if (details.name) message += `\nName: ${details.name}`;
     if (details.phone) message += `\nPhone: ${details.phone}`;
     if (details.address) message += `\nAddress: ${details.address}`;
-  } else if (paymentId) {
+  } else if (paymentId || isCod) {
     message += `\n\nPlease share my delivery address with you. Thank you!`;
   }
 
-  if (!paymentId) {
+  if (!paymentId && !isCod) {
     message += `\n\nPlease send me a payment link. Thank you!`;
   }
 
   return message;
 }
 
-function openWhatsAppWithOrder(paymentId) {
-  const message = buildOrderMessage(paymentId);
+function openWhatsAppWithOrder(paymentId, isCod) {
+  const message = buildOrderMessage(paymentId, isCod);
   const url = `https://wa.me/${SELLER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
+}
+
+function placeCodOrder() {
+  openWhatsAppWithOrder(null, true);
+  cart = {};
+  saveCart();
+  renderCart();
+  alert("Order placed! Please confirm your delivery details on WhatsApp. Pay in cash when your order arrives.");
 }
 
 async function checkout() {
@@ -464,12 +496,17 @@ async function checkout() {
     return;
   }
 
+  saveDetailsIfChecked();
+
+  if (getSelectedPaymentMethod() === "cod") {
+    placeCodOrder();
+    return;
+  }
+
   const checkoutBtn = document.getElementById("checkout-btn");
   const originalLabel = checkoutBtn.textContent;
   checkoutBtn.disabled = true;
   checkoutBtn.textContent = "Starting payment...";
-
-  saveDetailsIfChecked();
 
   try {
     const orderRes = await fetch("/.netlify/functions/create-order", {
@@ -541,12 +578,16 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCart();
   renderWishlist();
   loadSavedDetails();
+  updateCheckoutUI();
 
   document.getElementById("cart-toggle").addEventListener("click", openCart);
   document.getElementById("cart-close").addEventListener("click", closeCart);
   document.getElementById("cart-overlay").addEventListener("click", closeCart);
   document.getElementById("checkout-btn").addEventListener("click", checkout);
   document.getElementById("clear-details-btn").addEventListener("click", clearSavedDetails);
+  document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+    radio.addEventListener("change", updateCheckoutUI);
+  });
 
   document.getElementById("wishlist-toggle").addEventListener("click", openWishlist);
   document.getElementById("wishlist-close").addEventListener("click", closeWishlist);

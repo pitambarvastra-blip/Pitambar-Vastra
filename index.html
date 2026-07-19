@@ -83,8 +83,12 @@
         <span>Total</span>
         <span id="cart-total">₹0</span>
       </div>
+      <div class="payment-method-row">
+        <label><input type="radio" name="payment-method" value="online" checked> Pay Online</label>
+        <label><input type="radio" name="payment-method" value="cod"> Cash on Delivery</label>
+      </div>
       <button id="checkout-btn" class="checkout-btn">Pay Now</button>
-      <p class="checkout-note">
+      <p class="checkout-note" id="checkout-note">
         Secure payment powered by Razorpay. After payment, you'll be asked to share your delivery address on WhatsApp.<br>
         🪷 3-day returns on unused items.
       </p>
@@ -101,6 +105,9 @@
     <p class="footer-policy">
       <strong>Returns:</strong> Full refund within 3 days of delivery if you're not happy with your purchase, as long as the item is unused and in its original condition.
       <br><strong>Shipping:</strong> Flat ₹29 on every order.
+    </p>
+    <p class="footer-links">
+      <a href="privacy-policy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html">Terms &amp; Conditions</a>
     </p>
     <p>&copy; <span id="year"></span> Pitambar Vastra</p>
   </footer>

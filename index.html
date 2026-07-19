@@ -14,9 +14,14 @@
   <header class="site-header">
     <div class="header-inner">
       <h1 class="logo">Pitambar Vastra</h1>
-      <button id="cart-toggle" class="cart-toggle">
-        🛒 Cart <span id="cart-count">0</span>
-      </button>
+      <div class="header-actions">
+        <button id="wishlist-toggle" class="wishlist-toggle">
+          ♡ Wishlist <span id="wishlist-count">0</span>
+        </button>
+        <button id="cart-toggle" class="cart-toggle">
+          🛒 Cart <span id="cart-count">0</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -37,6 +42,16 @@
     </section>
   </main>
 
+  <!-- Wishlist drawer -->
+  <div id="wishlist-overlay" class="cart-overlay"></div>
+  <aside id="wishlist-drawer" class="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3>Your Wishlist</h3>
+      <button id="wishlist-close">&times;</button>
+    </div>
+    <div id="wishlist-items" class="cart-items"></div>
+  </aside>
+
   <!-- Cart drawer -->
   <div id="cart-overlay" class="cart-overlay"></div>
   <aside id="cart-drawer" class="cart-drawer">
@@ -45,6 +60,16 @@
       <button id="cart-close">&times;</button>
     </div>
     <div id="cart-items" class="cart-items"></div>
+    <div class="delivery-details">
+      <h4>Delivery Details <span>(optional, speeds up checkout)</span></h4>
+      <input type="text" id="detail-name" placeholder="Full name">
+      <input type="tel" id="detail-phone" placeholder="Phone number">
+      <textarea id="detail-address" placeholder="Delivery address" rows="2"></textarea>
+      <div class="save-details-row">
+        <label><input type="checkbox" id="save-details-checkbox" checked> Remember my details for next time</label>
+        <button type="button" id="clear-details-btn">Clear</button>
+      </div>
+    </div>
     <div class="cart-footer">
       <div class="cart-line">
         <span>Subtotal</span>

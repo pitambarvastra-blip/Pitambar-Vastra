@@ -57,6 +57,149 @@ function cartTotal() {
 }
 
 // ============================================================
+// SAVED DELIVERY DETAILS — optional, browser-only, no login/password
+// ============================================================
+const DETAILS_STORAGE_KEY = "customerDetails";
+
+function loadSavedDetails() {
+  const nameEl = document.getElementById("detail-name");
+  if (!nameEl) return;
+  const saved = JSON.parse(localStorage.getItem(DETAILS_STORAGE_KEY) || "null");
+  if (saved) {
+    document.getElementById("detail-name").value = saved.name || "";
+    document.getElementById("detail-phone").value = saved.phone || "";
+    document.getElementById("detail-address").value = saved.address || "";
+  }
+}
+
+function getEnteredDetails() {
+  return {
+    name: document.getElementById("detail-name")?.value.trim() || "",
+    phone: document.getElementById("detail-phone")?.value.trim() || "",
+    address: document.getElementById("detail-address")?.value.trim() || ""
+  };
+}
+
+function saveDetailsIfChecked() {
+  const checkbox = document.getElementById("save-details-checkbox");
+  if (checkbox && checkbox.checked) {
+    localStorage.setItem(DETAILS_STORAGE_KEY, JSON.stringify(getEnteredDetails()));
+  }
+}
+
+function clearSavedDetails() {
+  localStorage.removeItem(DETAILS_STORAGE_KEY);
+  document.getElementById("detail-name").value = "";
+  document.getElementById("detail-phone").value = "";
+  document.getElementById("detail-address").value = "";
+}
+
+// ============================================================
+// WISHLIST (persisted in the browser via localStorage, no login)
+// ============================================================
+let wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]"); // array of product ids
+
+function saveWishlist() {
+  localStorage.setItem("wishlist", JSON.stringify(wishlist));
+}
+
+function isWished(productId) {
+  return wishlist.includes(productId);
+}
+
+function toggleWishlist(productId) {
+  wishlist = isWished(productId) ? wishlist.filter(id => id !== productId) : [...wishlist, productId];
+  saveWishlist();
+  renderWishlist();
+  updateWishlistButtons();
+}
+
+function updateWishlistButtons() {
+  document.querySelectorAll(".wishlist-btn, .detail-wishlist-btn").forEach(btn => {
+    const wished = isWished(btn.dataset.id);
+    btn.textContent = btn.classList.contains("detail-wishlist-btn")
+      ? (wished ? "♥ Saved" : "♡ Save")
+      : (wished ? "♥" : "♡");
+    btn.classList.toggle("active", wished);
+  });
+  const countEl = document.getElementById("wishlist-count");
+  if (countEl) countEl.textContent = wishlist.length;
+}
+
+function renderWishlist() {
+  const itemsEl = document.getElementById("wishlist-items");
+  if (!itemsEl) return;
+
+  if (wishlist.length === 0) {
+    itemsEl.innerHTML = `<p class="cart-empty">Your wishlist is empty.</p>`;
+    return;
+  }
+
+  itemsEl.innerHTML = wishlist.map(id => {
+    const product = PRODUCTS.find(p => p.id === id);
+    if (!product) return "";
+    return `
+      <div class="cart-item">
+        <img src="${product.images[0]}" alt="${product.name}" class="cart-item-image">
+        <div class="cart-item-info">
+          <span class="cart-item-name">${product.name}</span>
+          <span class="cart-item-price">${CURRENCY_SYMBOL}${product.price}</span>
+          <div class="cart-item-controls">
+            <button class="wishlist-move-btn" data-id="${id}">Move to Cart</button>
+            <button class="remove-btn" data-id="${id}" data-wishlist-remove>Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  itemsEl.querySelectorAll(".wishlist-move-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      addToCart(btn.dataset.id);
+      toggleWishlist(btn.dataset.id);
+      closeWishlist();
+      openCart();
+    });
+  });
+  itemsEl.querySelectorAll("[data-wishlist-remove]").forEach(btn => {
+    btn.addEventListener("click", () => toggleWishlist(btn.dataset.id));
+  });
+}
+
+function openWishlist() {
+  closeCart();
+  document.getElementById("wishlist-drawer").classList.add("open");
+  document.getElementById("wishlist-overlay").classList.add("open");
+}
+
+function closeWishlist() {
+  document.getElementById("wishlist-drawer").classList.remove("open");
+  document.getElementById("wishlist-overlay").classList.remove("open");
+}
+
+// ============================================================
+// SHARE — uses the phone's native share sheet (WhatsApp chat,
+// WhatsApp Status, Instagram Stories, etc.), with a WhatsApp
+// link as a fallback on browsers without share support
+// ============================================================
+function productUrl(product) {
+  const base = window.location.href.split(/[?#]/)[0].replace(/[^/]*$/, "");
+  return `${base}product.html?id=${product.id}`;
+}
+
+function shareProduct(product) {
+  const text = `Check out ${product.name} — ${CURRENCY_SYMBOL}${product.price} at ${STORE_NAME}`;
+  const url = productUrl(product);
+
+  if (navigator.share) {
+    navigator.share({ title: product.name, text, url }).catch(() => {});
+  } else {
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+    window.open(waUrl, "_blank");
+  }
+}
+
+// ============================================================
 // RENDERING — homepage product grid
 // ============================================================
 function renderProducts() {
@@ -68,6 +211,7 @@ function renderProducts() {
       <a href="product.html?id=${p.id}" class="product-image-wrap">
         <img src="${p.images[0]}" alt="${p.name}" class="product-image" data-main-image>
       </a>
+      <button class="wishlist-btn" data-id="${p.id}" aria-label="Save to wishlist">♡</button>
       ${p.images.length > 1 ? `
         <div class="product-thumbs">
           ${p.images.map((img, i) => `
@@ -77,7 +221,10 @@ function renderProducts() {
       ` : ""}
       <a href="product.html?id=${p.id}" class="product-name">${p.name}</a>
       <p class="product-description">${p.description}</p>
-      <span class="return-badge">🪷 3-day returns</span>
+      <div class="product-actions-row">
+        <span class="return-badge">🪷 3-day returns</span>
+        <button class="share-btn" data-id="${p.id}">↗ Share</button>
+      </div>
       <div class="product-footer">
         <span class="product-price">${CURRENCY_SYMBOL}${p.price}</span>
         <button class="add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
@@ -98,6 +245,22 @@ function renderProducts() {
       thumb.classList.add("active");
     });
   });
+
+  grid.querySelectorAll(".wishlist-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      toggleWishlist(btn.dataset.id);
+    });
+  });
+
+  grid.querySelectorAll(".share-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const product = PRODUCTS.find(p => p.id === btn.dataset.id);
+      if (product) shareProduct(product);
+    });
+  });
+
+  updateWishlistButtons();
 }
 
 // ============================================================
@@ -145,6 +308,11 @@ function renderProductDetail() {
 
       <button class="detail-add-btn" id="detail-add-btn">Add to Cart</button>
 
+      <div class="detail-actions">
+        <button class="detail-wishlist-btn" data-id="${product.id}">♡ Save</button>
+        <button class="detail-share-btn">↗ Share</button>
+      </div>
+
       <div class="detail-policies">
         <div class="detail-policy-item">🪷 <span><strong>3-Day Returns</strong> — full refund if unused and in original condition.</span></div>
         <div class="detail-policy-item">🚚 <span><strong>Shipping</strong> — flat ${CURRENCY_SYMBOL}${SHIPPING_FEE} on every order.</span></div>
@@ -174,6 +342,15 @@ function renderProductDetail() {
   document.getElementById("detail-add-btn").addEventListener("click", () => {
     addToCart(product.id, qty);
   });
+
+  document.querySelector(".detail-wishlist-btn").addEventListener("click", () => {
+    toggleWishlist(product.id);
+  });
+  document.querySelector(".detail-share-btn").addEventListener("click", () => {
+    shareProduct(product);
+  });
+
+  updateWishlistButtons();
 }
 
 // ============================================================
@@ -224,6 +401,7 @@ function renderCart() {
 // CART DRAWER OPEN/CLOSE
 // ============================================================
 function openCart() {
+  closeWishlist();
   document.getElementById("cart-drawer").classList.add("open");
   document.getElementById("cart-overlay").classList.add("open");
 }
@@ -237,6 +415,8 @@ function closeCart() {
 // CHECKOUT — opens Razorpay's live payment popup for the cart total
 // ============================================================
 function buildOrderMessage(paymentId) {
+  const details = getEnteredDetails();
+
   let message = paymentId
     ? "Payment received! My order:\n\n"
     : "Hi! I'd like to order:\n\n";
@@ -253,8 +433,18 @@ function buildOrderMessage(paymentId) {
 
   if (paymentId) {
     message += `\nPayment ID: ${paymentId}`;
+  }
+
+  if (details.name || details.phone || details.address) {
+    message += `\n\nDelivery details:`;
+    if (details.name) message += `\nName: ${details.name}`;
+    if (details.phone) message += `\nPhone: ${details.phone}`;
+    if (details.address) message += `\nAddress: ${details.address}`;
+  } else if (paymentId) {
     message += `\n\nPlease share my delivery address with you. Thank you!`;
-  } else {
+  }
+
+  if (!paymentId) {
     message += `\n\nPlease send me a payment link. Thank you!`;
   }
 
@@ -278,6 +468,8 @@ async function checkout() {
   const originalLabel = checkoutBtn.textContent;
   checkoutBtn.disabled = true;
   checkoutBtn.textContent = "Starting payment...";
+
+  saveDetailsIfChecked();
 
   try {
     const orderRes = await fetch("/.netlify/functions/create-order", {
@@ -347,9 +539,16 @@ document.addEventListener("DOMContentLoaded", () => {
   renderProducts();
   renderProductDetail();
   renderCart();
+  renderWishlist();
+  loadSavedDetails();
 
   document.getElementById("cart-toggle").addEventListener("click", openCart);
   document.getElementById("cart-close").addEventListener("click", closeCart);
   document.getElementById("cart-overlay").addEventListener("click", closeCart);
   document.getElementById("checkout-btn").addEventListener("click", checkout);
+  document.getElementById("clear-details-btn").addEventListener("click", clearSavedDetails);
+
+  document.getElementById("wishlist-toggle").addEventListener("click", openWishlist);
+  document.getElementById("wishlist-close").addEventListener("click", closeWishlist);
+  document.getElementById("wishlist-overlay").addEventListener("click", closeWishlist);
 });

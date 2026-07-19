@@ -13,7 +13,7 @@
 
   <header class="site-header">
     <div class="header-inner">
-      <h1 class="logo">Pitambar Vastra</h1>
+      <a href="index.html"><h1 class="logo">Pitambar Vastra</h1></a>
       <button id="cart-toggle" class="cart-toggle">
         🛒 Cart <span id="cart-count">0</span>
       </button>
@@ -21,20 +21,9 @@
   </header>
 
   <main>
-    <section class="hero">
-      <h2>Welcome to Pitambar Vastra</h2>
-      <p>Quality products, delivered to your door.</p>
-    </section>
-
-    <div class="trust-bar">
-      <div class="trust-item"><strong>🪷 3-Day Returns</strong>Unused items, full refund</div>
-      <div class="trust-item"><strong>🚚 ₹29 Shipping</strong>Flat rate, all orders</div>
-      <div class="trust-item"><strong>🔒 Secure Payment</strong>Powered by Razorpay</div>
+    <div id="product-detail" class="product-detail">
+      <!-- product detail is injected here by js/cart.js -->
     </div>
-
-    <section class="product-grid" id="product-grid">
-      <!-- product cards are injected here by js/cart.js -->
-    </section>
   </main>
 
   <!-- Cart drawer -->

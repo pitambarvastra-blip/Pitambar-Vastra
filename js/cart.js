@@ -1,10 +1,11 @@
 // ============================================================
 // STORE SETTINGS — edit these lines for your business
 // ============================================================
-const SELLER_WHATSAPP_NUMBER = "91XXXXXXXXXX"; // country code + number, no + or spaces
+const SELLER_WHATSAPP_NUMBER = "918810795244"; // country code + number, no + or spaces
 const CURRENCY_SYMBOL = "₹";
 const STORE_NAME = "Pitambar Vastra";
 const RAZORPAY_KEY_ID = "rzp_live_TFMkT2zdtjR0cM"; // your Razorpay Key ID (safe to be public)
+const SHIPPING_FEE = 29; // flat shipping charge added whenever the cart isn't empty
 
 // ============================================================
 // CART STATE (persisted in the browser via localStorage)
@@ -15,8 +16,8 @@ function saveCart() {
   localStorage.setItem("cart", JSON.stringify(cart));
 }
 
-function addToCart(productId) {
-  cart[productId] = (cart[productId] || 0) + 1;
+function addToCart(productId, qty) {
+  cart[productId] = (cart[productId] || 0) + (qty || 1);
   saveCart();
   renderCart();
   openCart();
@@ -47,16 +48,26 @@ function cartSubtotal() {
   }, 0);
 }
 
+function cartShipping() {
+  return cartCount() > 0 ? SHIPPING_FEE : 0;
+}
+
+function cartTotal() {
+  return cartSubtotal() + cartShipping();
+}
+
 // ============================================================
-// RENDERING
+// RENDERING — homepage product grid
 // ============================================================
 function renderProducts() {
   const grid = document.getElementById("product-grid");
+  if (!grid) return;
+
   grid.innerHTML = PRODUCTS.map(p => `
     <article class="product-card">
-      <div class="product-image-wrap">
+      <a href="product.html?id=${p.id}" class="product-image-wrap">
         <img src="${p.images[0]}" alt="${p.name}" class="product-image" data-main-image>
-      </div>
+      </a>
       ${p.images.length > 1 ? `
         <div class="product-thumbs">
           ${p.images.map((img, i) => `
@@ -64,8 +75,9 @@ function renderProducts() {
           `).join("")}
         </div>
       ` : ""}
-      <h3 class="product-name">${p.name}</h3>
+      <a href="product.html?id=${p.id}" class="product-name">${p.name}</a>
       <p class="product-description">${p.description}</p>
+      <span class="return-badge">🪷 3-day returns</span>
       <div class="product-footer">
         <span class="product-price">${CURRENCY_SYMBOL}${p.price}</span>
         <button class="add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
@@ -78,7 +90,8 @@ function renderProducts() {
   });
 
   grid.querySelectorAll(".product-thumb").forEach(thumb => {
-    thumb.addEventListener("click", () => {
+    thumb.addEventListener("click", (e) => {
+      e.preventDefault();
       const card = thumb.closest(".product-card");
       card.querySelector("[data-main-image]").src = thumb.dataset.src;
       card.querySelectorAll(".product-thumb").forEach(t => t.classList.remove("active"));
@@ -87,6 +100,85 @@ function renderProducts() {
   });
 }
 
+// ============================================================
+// RENDERING — individual product detail page (product.html)
+// ============================================================
+function renderProductDetail() {
+  const container = document.getElementById("product-detail");
+  if (!container) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const product = PRODUCTS.find(p => p.id === params.get("id"));
+
+  if (!product) {
+    container.innerHTML = `<p class="cart-empty">Sorry, we couldn't find that product. <a href="index.html">Back to shop</a></p>`;
+    return;
+  }
+
+  document.title = `${product.name} — ${STORE_NAME}`;
+
+  container.innerHTML = `
+    <div class="detail-gallery">
+      <img src="${product.images[0]}" alt="${product.name}" class="detail-gallery-main" data-detail-main-image>
+      ${product.images.length > 1 ? `
+        <div class="detail-thumbs">
+          ${product.images.map((img, i) => `
+            <img src="${img}" alt="${product.name} photo ${i + 1}" class="detail-thumb ${i === 0 ? "active" : ""}" data-src="${img}">
+          `).join("")}
+        </div>
+      ` : ""}
+    </div>
+    <div class="detail-info">
+      <p class="detail-breadcrumb"><a href="index.html">Shop</a> / ${product.name}</p>
+      <h1 class="detail-name">${product.name}</h1>
+      <div class="detail-price">${CURRENCY_SYMBOL}${product.price}</div>
+      <p class="detail-description">${product.description}</p>
+
+      <div class="detail-qty">
+        <span>Quantity</span>
+        <div class="detail-qty-controls">
+          <button class="detail-qty-btn" id="detail-qty-minus">−</button>
+          <span id="detail-qty-value">1</span>
+          <button class="detail-qty-btn" id="detail-qty-plus">+</button>
+        </div>
+      </div>
+
+      <button class="detail-add-btn" id="detail-add-btn">Add to Cart</button>
+
+      <div class="detail-policies">
+        <div class="detail-policy-item">🪷 <span><strong>3-Day Returns</strong> — full refund if unused and in original condition.</span></div>
+        <div class="detail-policy-item">🚚 <span><strong>Shipping</strong> — flat ${CURRENCY_SYMBOL}${SHIPPING_FEE} on every order.</span></div>
+        <div class="detail-policy-item">🔒 <span><strong>Secure Payment</strong> — checkout powered by Razorpay.</span></div>
+      </div>
+    </div>
+  `;
+
+  container.querySelectorAll(".detail-thumb").forEach(thumb => {
+    thumb.addEventListener("click", () => {
+      container.querySelector("[data-detail-main-image]").src = thumb.dataset.src;
+      container.querySelectorAll(".detail-thumb").forEach(t => t.classList.remove("active"));
+      thumb.classList.add("active");
+    });
+  });
+
+  let qty = 1;
+  const qtyValueEl = document.getElementById("detail-qty-value");
+  document.getElementById("detail-qty-minus").addEventListener("click", () => {
+    qty = Math.max(1, qty - 1);
+    qtyValueEl.textContent = qty;
+  });
+  document.getElementById("detail-qty-plus").addEventListener("click", () => {
+    qty += 1;
+    qtyValueEl.textContent = qty;
+  });
+  document.getElementById("detail-add-btn").addEventListener("click", () => {
+    addToCart(product.id, qty);
+  });
+}
+
+// ============================================================
+// RENDERING — cart drawer
+// ============================================================
 function renderCart() {
   const itemsEl = document.getElementById("cart-items");
   const entries = Object.entries(cart);
@@ -124,6 +216,8 @@ function renderCart() {
 
   document.getElementById("cart-count").textContent = cartCount();
   document.getElementById("cart-subtotal").textContent = `${CURRENCY_SYMBOL}${cartSubtotal()}`;
+  document.getElementById("cart-shipping").textContent = `${CURRENCY_SYMBOL}${cartShipping()}`;
+  document.getElementById("cart-total").textContent = `${CURRENCY_SYMBOL}${cartTotal()}`;
 }
 
 // ============================================================
@@ -153,7 +247,9 @@ function buildOrderMessage(paymentId) {
       message += `- ${product.name} x${qty} = ${CURRENCY_SYMBOL}${product.price * qty}\n`;
     }
   });
-  message += `\nTotal: ${CURRENCY_SYMBOL}${cartSubtotal()}`;
+  message += `\nSubtotal: ${CURRENCY_SYMBOL}${cartSubtotal()}`;
+  message += `\nShipping: ${CURRENCY_SYMBOL}${cartShipping()}`;
+  message += `\nTotal: ${CURRENCY_SYMBOL}${cartTotal()}`;
 
   if (paymentId) {
     message += `\nPayment ID: ${paymentId}`;
@@ -186,7 +282,7 @@ async function checkout() {
   try {
     const orderRes = await fetch("/.netlify/functions/create-order", {
       method: "POST",
-      body: JSON.stringify({ amount: cartSubtotal() })
+      body: JSON.stringify({ amount: cartTotal() })
     });
 
     if (!orderRes.ok) {
@@ -201,7 +297,7 @@ async function checkout() {
       currency: "INR",
       name: STORE_NAME,
       order_id: order.orderId,
-      theme: { color: "#b08968" },
+      theme: { color: "#7a1f2b" },
       handler: async function (response) {
         const verifyRes = await fetch("/.netlify/functions/verify-payment", {
           method: "POST",
@@ -249,6 +345,7 @@ async function checkout() {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("year").textContent = new Date().getFullYear();
   renderProducts();
+  renderProductDetail();
   renderCart();
 
   document.getElementById("cart-toggle").addEventListener("click", openCart);

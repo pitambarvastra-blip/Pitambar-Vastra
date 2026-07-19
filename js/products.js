@@ -25,21 +25,22 @@ const PRODUCTS = [
     id: "p2",
     name: "Cotton Vibrant Yellow Vastra",
     price: 59,
-    images: ["images/placeholder.svg"],
+    images: [
+      "images/vibrant-yellow-vastra1.jpg",
+      "images/vibrant-yellow-vastra2.jpg",
+      "images/vibrant-yellow-vastra3.jpg"
+    ],
     description: "Durable cotton Yellow Poshak, perfect for everyday use. Available in multiple sizes(0,1,2,3,4,5,6)."
   },
   {
     id: "p3",
     name: "White Cotton Vastra",
     price: 49,
-    images: ["images/placeholder.svg"],
+    images: [
+      "images/white-cotton-vastra1.jpg",
+      "images/white-cotton-vastra2.jpg",
+      "images/white-cotton-vastra3.jpg"
+    ],
     description: "Breatheable Cloth, Pure Cotton. Available in multiple sizes(0,1,2,3,4,5,6)."
-  },
-  {
-    id: "p4",
-    name: "Handmade Candle",
-    price: 399,
-    images: ["images/placeholder.svg"],
-    description: "Soy wax candle with a warm vanilla scent, 40hr burn time."
   }
 ];

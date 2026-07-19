@@ -897,3 +897,137 @@ a {
   line-height: 1.7;
   margin-bottom: 10px;
 }
+
+/* Order success modal */
+.order-success-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 40px 32px;
+  max-width: 380px;
+  width: 90vw;
+  text-align: center;
+  z-index: 31;
+  display: none;
+  box-shadow: 0 20px 50px rgba(74, 36, 22, 0.25);
+}
+
+.order-success-modal.open {
+  display: block;
+}
+
+.order-success-icon {
+  font-size: 2.6rem;
+  margin-bottom: 12px;
+}
+
+.order-success-modal h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--accent-deep);
+  margin-bottom: 10px;
+}
+
+.order-success-modal p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.order-success-modal button {
+  margin-top: 18px;
+}
+
+/* Orders admin page */
+.orders-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+}
+
+.orders-page h1 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  color: var(--accent-deep);
+  margin-bottom: 10px;
+}
+
+#orders-login input {
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  margin: 12px 0;
+  border-radius: 2px;
+  display: block;
+}
+
+#orders-login .checkout-btn {
+  max-width: 300px;
+}
+
+.orders-error {
+  color: var(--accent-deep);
+  font-size: 0.85rem;
+  margin-top: 10px;
+}
+
+.orders-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.order-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.order-id {
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.order-items {
+  font-size: 0.9rem;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.order-totals {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.order-payment {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.order-customer {
+  font-size: 0.88rem;
+  color: var(--ink);
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}

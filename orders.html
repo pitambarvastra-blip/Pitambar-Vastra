@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders — Pitambar Vastra</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html"><h1 class="logo">Pitambar Vastra</h1></a>
+    </div>
+  </header>
+
+  <main>
+    <div class="orders-page">
+
+      <div id="orders-login">
+        <h1>Orders</h1>
+        <p>Enter your admin password to view orders.</p>
+        <input type="password" id="orders-password" placeholder="Password">
+        <button id="orders-login-btn" class="checkout-btn">View Orders</button>
+        <p id="orders-login-error" class="orders-error"></p>
+      </div>
+
+      <div id="orders-content" style="display:none;">
+        <div class="orders-header-row">
+          <h1>Orders</h1>
+          <button id="orders-refresh-btn" class="wishlist-toggle">Refresh</button>
+        </div>
+        <div id="orders-list"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; <span id="year"></span> Pitambar Vastra</p>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const CURRENCY_SYMBOL = "₹";
+    let adminPassword = "";
+
+    function renderOrders(orders) {
+      const listEl = document.getElementById("orders-list");
+      if (orders.length === 0) {
+        listEl.innerHTML = `<p class="cart-empty">No orders yet.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = orders.map(o => `
+        <div class="order-card">
+          <div class="order-card-top">
+            <span class="order-id">${o.orderId}</span>
+            <span class="order-date">${new Date(o.placedAt).toLocaleString("en-IN")}</span>
+          </div>
+          <div class="order-items">
+            ${o.items.map(i => `<div>${i.name} x${i.qty} — ${CURRENCY_SYMBOL}${i.price * i.qty}</div>`).join("")}
+          </div>
+          <div class="order-totals">
+            Subtotal: ${CURRENCY_SYMBOL}${o.subtotal} &nbsp;|&nbsp;
+            Shipping: ${CURRENCY_SYMBOL}${o.shipping} &nbsp;|&nbsp;
+            <strong>Total: ${CURRENCY_SYMBOL}${o.total}</strong>
+          </div>
+          <div class="order-payment">
+            Payment: ${o.paymentMethod === "cod" ? "Cash on Delivery" : "Paid Online"}
+            ${o.paymentId ? ` (ID: ${o.paymentId})` : ""}
+          </div>
+          <div class="order-customer">
+            <strong>${o.customer.name}</strong><br>
+            ${o.customer.phone}<br>
+            ${o.customer.address}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadOrders() {
+      const errEl = document.getElementById("orders-login-error");
+      errEl.textContent = "";
+      try {
+        const res = await fetch("/.netlify/functions/get-orders", {
+          method: "POST",
+          body: JSON.stringify({ password: adminPassword })
+        });
+        if (!res.ok) {
+          errEl.textContent = "Incorrect password.";
+          return;
+        }
+        const data = await res.json();
+        document.getElementById("orders-login").style.display = "none";
+        document.getElementById("orders-content").style.display = "block";
+        renderOrders(data.orders);
+      } catch (err) {
+        errEl.textContent = "Something went wrong. Please try again.";
+      }
+    }
+
+    document.getElementById("orders-login-btn").addEventListener("click", () => {
+      adminPassword = document.getElementById("orders-password").value;
+      loadOrders();
+    });
+    document.getElementById("orders-password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("orders-login-btn").click();
+    });
+    document.getElementById("orders-refresh-btn").addEventListener("click", loadOrders);
+  </script>
+</body>
+</html>

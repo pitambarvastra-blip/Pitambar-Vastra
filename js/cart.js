@@ -2,9 +2,11 @@
 // STORE SETTINGS — edit these lines for your business
 // ============================================================
 const SELLER_WHATSAPP_NUMBER = "918810795244"; // country code + number, no + or spaces
+const SELLER_EMAIL = "pitambarvastra@gmail.com";
 const CURRENCY_SYMBOL = "₹";
 const STORE_NAME = "Pitambar Vastra";
 const RAZORPAY_KEY_ID = "rzp_live_TFMkT2zdtjR0cM"; // your Razorpay Key ID (safe to be public)
+const WEB3FORMS_ACCESS_KEY = "0908b3e9-3d72-4e94-baff-3de1820d6107"; // free at web3forms.com, sends you an email per order
 const SHIPPING_FEE = 29; // flat shipping charge added whenever the cart isn't empty
 
 // ============================================================
@@ -434,59 +436,100 @@ function updateCheckoutUI() {
   }
 }
 
-function buildOrderMessage(paymentId, isCod) {
+function validateDeliveryDetails() {
   const details = getEnteredDetails();
-
-  let message = paymentId
-    ? "Payment received! My order:\n\n"
-    : isCod
-      ? "Hi! I'd like to place a Cash on Delivery order:\n\n"
-      : "Hi! I'd like to order:\n\n";
-
-  Object.entries(cart).forEach(([id, qty]) => {
-    const product = PRODUCTS.find(p => p.id === id);
-    if (product) {
-      message += `- ${product.name} x${qty} = ${CURRENCY_SYMBOL}${product.price * qty}\n`;
-    }
-  });
-  message += `\nSubtotal: ${CURRENCY_SYMBOL}${cartSubtotal()}`;
-  message += `\nShipping: ${CURRENCY_SYMBOL}${cartShipping()}`;
-  message += `\nTotal: ${CURRENCY_SYMBOL}${cartTotal()}`;
-
-  if (paymentId) {
-    message += `\nPayment ID: ${paymentId}`;
-  } else if (isCod) {
-    message += `\nPayment Method: Cash on Delivery`;
+  if (!details.name || !details.phone || !details.address) {
+    alert("Please fill in your name, phone, and delivery address so we can deliver your order.");
+    return false;
   }
-
-  if (details.name || details.phone || details.address) {
-    message += `\n\nDelivery details:`;
-    if (details.name) message += `\nName: ${details.name}`;
-    if (details.phone) message += `\nPhone: ${details.phone}`;
-    if (details.address) message += `\nAddress: ${details.address}`;
-  } else if (paymentId || isCod) {
-    message += `\n\nPlease share my delivery address with you. Thank you!`;
-  }
-
-  if (!paymentId && !isCod) {
-    message += `\n\nPlease send me a payment link. Thank you!`;
-  }
-
-  return message;
+  return true;
 }
 
-function openWhatsAppWithOrder(paymentId, isCod) {
-  const message = buildOrderMessage(paymentId, isCod);
-  const url = `https://wa.me/${SELLER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+function buildOrderPayload(paymentMethod, paymentId) {
+  return {
+    items: Object.entries(cart).map(([id, qty]) => {
+      const product = PRODUCTS.find(p => p.id === id);
+      return { id, name: product ? product.name : id, price: product ? product.price : 0, qty };
+    }),
+    subtotal: cartSubtotal(),
+    shipping: cartShipping(),
+    total: cartTotal(),
+    paymentMethod,
+    paymentId: paymentId || null,
+    customer: getEnteredDetails()
+  };
+}
+
+async function saveOrderToServer(payload) {
+  const res = await fetch("/.netlify/functions/save-order", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error("Could not save your order. Please contact us on WhatsApp so we don't miss it.");
+  }
+  return await res.json(); // { success, orderId }
+}
+
+function notifySellerByEmail(orderId, payload) {
+  if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === "YOUR_WEB3FORMS_ACCESS_KEY") return;
+
+  const itemsText = payload.items.map(i => `${i.name} x${i.qty} = ${CURRENCY_SYMBOL}${i.price * i.qty}`).join("\n");
+  const message =
+    `New order ${orderId}\n\n${itemsText}\n\n` +
+    `Subtotal: ${CURRENCY_SYMBOL}${payload.subtotal}\nShipping: ${CURRENCY_SYMBOL}${payload.shipping}\nTotal: ${CURRENCY_SYMBOL}${payload.total}\n\n` +
+    `Payment: ${payload.paymentMethod === "cod" ? "Cash on Delivery" : "Paid Online (" + payload.paymentId + ")"}\n\n` +
+    `Customer: ${payload.customer.name}\nPhone: ${payload.customer.phone}\nAddress: ${payload.customer.address}`;
+
+  fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: `New order ${orderId} — ${STORE_NAME}`,
+      from_name: STORE_NAME,
+      email: SELLER_EMAIL,
+      message
+    })
+  }).catch(() => {}); // best-effort — an email failure shouldn't block the order
+}
+
+function showOrderSuccess(orderId) {
+  document.getElementById("order-success-id").textContent = orderId;
+  document.getElementById("order-success-overlay").classList.add("open");
+  document.getElementById("order-success-modal").classList.add("open");
+}
+
+function hideOrderSuccess() {
+  document.getElementById("order-success-overlay").classList.remove("open");
+  document.getElementById("order-success-modal").classList.remove("open");
+}
+
+function openWhatsAppContact() {
+  const url = `https://wa.me/${SELLER_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi! I have a question.")}`;
   window.open(url, "_blank");
 }
 
-function placeCodOrder() {
-  openWhatsAppWithOrder(null, true);
-  cart = {};
-  saveCart();
-  renderCart();
-  alert("Order placed! Please confirm your delivery details on WhatsApp. Pay in cash when your order arrives.");
+async function placeCodOrder() {
+  const checkoutBtn = document.getElementById("checkout-btn");
+  const originalLabel = checkoutBtn.textContent;
+  checkoutBtn.disabled = true;
+  checkoutBtn.textContent = "Placing order...";
+
+  try {
+    const payload = buildOrderPayload("cod", null);
+    const result = await saveOrderToServer(payload);
+    notifySellerByEmail(result.orderId, payload);
+    cart = {};
+    saveCart();
+    renderCart();
+    showOrderSuccess(result.orderId);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = originalLabel;
+  }
 }
 
 async function checkout() {
@@ -496,10 +539,12 @@ async function checkout() {
     return;
   }
 
+  if (!validateDeliveryDetails()) return;
+
   saveDetailsIfChecked();
 
   if (getSelectedPaymentMethod() === "cod") {
-    placeCodOrder();
+    await placeCodOrder();
     return;
   }
 
@@ -535,11 +580,20 @@ async function checkout() {
         const verifyData = await verifyRes.json();
 
         if (verifyData.valid) {
-          openWhatsAppWithOrder(response.razorpay_payment_id);
-          cart = {};
-          saveCart();
-          renderCart();
-          alert("Payment successful! Please send your delivery address on WhatsApp.");
+          try {
+            const payload = buildOrderPayload("online", response.razorpay_payment_id);
+            const result = await saveOrderToServer(payload);
+            notifySellerByEmail(result.orderId, payload);
+            cart = {};
+            saveCart();
+            renderCart();
+            showOrderSuccess(result.orderId);
+          } catch (err) {
+            alert(
+              "Payment succeeded, but we couldn't save your order automatically. Please contact us on WhatsApp with payment ID: " +
+                response.razorpay_payment_id
+            );
+          }
         } else {
           alert(
             "We couldn't verify this payment automatically. Please contact us on WhatsApp with payment ID: " +
@@ -592,4 +646,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("wishlist-toggle").addEventListener("click", openWishlist);
   document.getElementById("wishlist-close").addEventListener("click", closeWishlist);
   document.getElementById("wishlist-overlay").addEventListener("click", closeWishlist);
+
+  const successCloseBtn = document.getElementById("order-success-close");
+  if (successCloseBtn) successCloseBtn.addEventListener("click", hideOrderSuccess);
+  const successOverlay = document.getElementById("order-success-overlay");
+  if (successOverlay) successOverlay.addEventListener("click", hideOrderSuccess);
+
+  const whatsappContactBtn = document.getElementById("whatsapp-contact-btn");
+  if (whatsappContactBtn) whatsappContactBtn.addEventListener("click", openWhatsAppContact);
 });

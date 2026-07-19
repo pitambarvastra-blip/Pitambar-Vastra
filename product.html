@@ -50,7 +50,7 @@
     </div>
     <div id="cart-items" class="cart-items"></div>
     <div class="delivery-details">
-      <h4>Delivery Details <span>(optional, speeds up checkout)</span></h4>
+      <h4>Delivery Details <span>(required to place your order)</span></h4>
       <input type="text" id="detail-name" placeholder="Full name">
       <input type="tel" id="detail-phone" placeholder="Phone number">
       <textarea id="detail-address" placeholder="Delivery address" rows="2"></textarea>
@@ -78,11 +78,21 @@
       </div>
       <button id="checkout-btn" class="checkout-btn">Pay Now</button>
       <p class="checkout-note" id="checkout-note">
-        Secure payment powered by Razorpay. After payment, you'll be asked to share your delivery address on WhatsApp.<br>
+        Secure payment powered by Razorpay. Your order is placed directly on our website — no messaging needed.<br>
         🪷 3-day returns on unused items.
       </p>
     </div>
   </aside>
+
+  <!-- Order placed confirmation -->
+  <div id="order-success-overlay" class="cart-overlay"></div>
+  <div id="order-success-modal" class="order-success-modal">
+    <div class="order-success-icon">✅</div>
+    <h3>Order Placed Successfully!</h3>
+    <p>Your order ID is <strong id="order-success-id"></strong></p>
+    <p>We've received your order and will contact you if needed. Thank you for shopping with us!</p>
+    <button id="order-success-close" class="checkout-btn">Continue Shopping</button>
+  </div>
 
   <footer class="site-footer">
     <div class="footer-contact">
@@ -97,6 +107,9 @@
     </p>
     <p class="footer-links">
       <a href="privacy-policy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html">Terms &amp; Conditions</a>
+    </p>
+    <p class="footer-links">
+      <button type="button" id="whatsapp-contact-btn" class="share-btn">💬 Message us on WhatsApp</button>
     </p>
     <p>&copy; <span id="year"></span> Pitambar Vastra</p>
   </footer>

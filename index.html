@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pitambar Vastra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <h1 class="logo">Pitambar Vastra</h1>
+      <button id="cart-toggle" class="cart-toggle">
+        🛒 Cart <span id="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Welcome to Pitambar Vastra</h2>
+      <p>Quality products, delivered to your door.</p>
+    </section>
+
+    <section class="product-grid" id="product-grid">
+      <!-- product cards are injected here by js/cart.js -->
+    </section>
+  </main>
+
+  <!-- Cart drawer -->
+  <div id="cart-overlay" class="cart-overlay"></div>
+  <aside id="cart-drawer" class="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3>Your Cart</h3>
+      <button id="cart-close">&times;</button>
+    </div>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="cart-footer">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cart-subtotal">₹0</span>
+      </div>
+      <button id="checkout-btn" class="checkout-btn">Checkout via WhatsApp</button>
+      <p class="checkout-note">
+        You'll send your order to us on WhatsApp. We'll reply with a secure Razorpay payment link for the exact total.
+      </p>
+    </div>
+  </aside>
+
+  <footer class="site-footer">
+    <div class="footer-contact">
+      <h3>Pitambar Vastra</h3>
+      <p>123 Street no 11 Block D, Delhi, Delhi, 110092</p>
+      <p>Phone: +91 8810795244</p>
+      <p>Email: pitambarvastra@gmail.com</p>
+    </div>
+    <p>&copy; <span id="year"></span> Pitambar Vastra</p>
+  </footer>
+
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+</body>
+</html>

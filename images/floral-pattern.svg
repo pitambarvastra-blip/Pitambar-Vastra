@@ -1,0 +1,31 @@
+<svg width="260" height="260" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="flower">
+      <g fill="none" stroke="#b08968" stroke-width="1.3" stroke-opacity="0.55">
+        <ellipse cx="0" cy="-9" rx="5" ry="8"/>
+        <ellipse cx="8.5" cy="-2.8" rx="5" ry="8" transform="rotate(72 8.5 -2.8)"/>
+        <ellipse cx="5.3" cy="7.3" rx="5" ry="8" transform="rotate(144 5.3 7.3)"/>
+        <ellipse cx="-5.3" cy="7.3" rx="5" ry="8" transform="rotate(216 -5.3 7.3)"/>
+        <ellipse cx="-8.5" cy="-2.8" rx="5" ry="8" transform="rotate(288 -8.5 -2.8)"/>
+      </g>
+      <circle cx="0" cy="0" r="2.6" fill="#c98a7d" fill-opacity="0.6" stroke="none"/>
+    </g>
+    <g id="sprig" fill="none" stroke="#b08968" stroke-width="1.2" stroke-opacity="0.45">
+      <path d="M0,0 C 6,-10 4,-22 0,-30"/>
+      <path d="M0,-10 C 6,-13 10,-10 12,-5 C 7,-7 3,-6 0,-3 Z"/>
+      <path d="M0,-20 C -6,-23 -10,-20 -12,-15 C -7,-17 -3,-16 0,-13 Z"/>
+    </g>
+  </defs>
+
+  <use href="#flower" x="40" y="35"/>
+  <use href="#flower" x="190" y="20" transform="rotate(20 190 20)"/>
+  <use href="#flower" x="230" y="140"/>
+  <use href="#flower" x="70" y="180" transform="rotate(-15 70 180)"/>
+  <use href="#flower" x="150" y="220" transform="rotate(35 150 220)"/>
+  <use href="#flower" x="10" y="230"/>
+
+  <use href="#sprig" x="120" y="90" transform="scale(0.8) rotate(10 120 90)"/>
+  <use href="#sprig" x="20" y="120" transform="scale(0.6) rotate(-25 20 120)"/>
+  <use href="#sprig" x="210" y="80" transform="scale(0.7) rotate(200 210 80)"/>
+  <use href="#sprig" x="100" y="245" transform="scale(0.6) rotate(160 100 245)"/>
+</svg>

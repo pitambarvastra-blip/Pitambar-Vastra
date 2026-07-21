@@ -92,7 +92,7 @@
           <div class="order-customer">
             <strong>${escapeHtml(o.customer.name)}</strong><br>
             ${escapeHtml(o.customer.phone)}<br>
-            ${escapeHtml(o.customer.address)}
+            ${escapeHtml(o.customer.address)}${o.customer.pincode ? ` — ${escapeHtml(o.customer.pincode)}` : ""}
           </div>
           ${o.customizationImage || o.sizeHelpImage ? `
             <div class="order-uploads">

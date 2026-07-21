@@ -21,7 +21,7 @@ exports.handler = async function (event) {
     if (!order.items || order.items.length === 0) {
       return { statusCode: 400, body: JSON.stringify({ error: "Order has no items" }) };
     }
-    if (!order.customer || !order.customer.name || !order.customer.phone || !order.customer.address) {
+    if (!order.customer || !order.customer.name || !order.customer.phone || !order.customer.address || !order.customer.pincode) {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing delivery details" }) };
     }
 

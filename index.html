@@ -70,6 +70,9 @@
       <input type="text" id="detail-name" placeholder="Full name" data-i18n-placeholder="placeholderName">
       <input type="tel" id="detail-phone" placeholder="Phone number" data-i18n-placeholder="placeholderPhone">
       <textarea id="detail-address" placeholder="Delivery address" data-i18n-placeholder="placeholderAddress" rows="2"></textarea>
+      <input type="text" id="detail-pincode" placeholder="Pincode (6 digits)" data-i18n-placeholder="placeholderPincode" inputmode="numeric" maxlength="6" required>
+      <button type="button" id="use-location-btn" class="use-location-btn">📍 <span data-i18n="useLocation">Use my current location</span></button>
+      <p id="location-status" class="location-status"></p>
       <div class="save-details-row">
         <label><input type="checkbox" id="save-details-checkbox" checked> <span data-i18n="rememberDetails">Remember my details for next time</span></label>
         <button type="button" id="clear-details-btn" data-i18n="clear">Clear</button>

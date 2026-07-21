@@ -95,6 +95,7 @@ function loadSavedDetails() {
     document.getElementById("detail-name").value = saved.name || "";
     document.getElementById("detail-phone").value = saved.phone || "";
     document.getElementById("detail-address").value = saved.address || "";
+    document.getElementById("detail-pincode").value = saved.pincode || "";
   }
 }
 
@@ -102,7 +103,8 @@ function getEnteredDetails() {
   return {
     name: document.getElementById("detail-name")?.value.trim() || "",
     phone: document.getElementById("detail-phone")?.value.trim() || "",
-    address: document.getElementById("detail-address")?.value.trim() || ""
+    address: document.getElementById("detail-address")?.value.trim() || "",
+    pincode: document.getElementById("detail-pincode")?.value.trim() || ""
   };
 }
 
@@ -118,6 +120,48 @@ function clearSavedDetails() {
   document.getElementById("detail-name").value = "";
   document.getElementById("detail-phone").value = "";
   document.getElementById("detail-address").value = "";
+  document.getElementById("detail-pincode").value = "";
+}
+
+// ============================================================
+// USE CURRENT LOCATION — fills address + pincode from the browser's
+// geolocation, reverse-geocoded via OpenStreetMap's free Nominatim API
+// (no key/backend needed). Address is always editable afterwards.
+// ============================================================
+function useCurrentLocation() {
+  const statusEl = document.getElementById("location-status");
+  const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+
+  if (!navigator.geolocation) {
+    setStatus(t("locationNotSupported"));
+    return;
+  }
+
+  setStatus(t("locationFetching"));
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+        );
+        if (!res.ok) throw new Error("reverse geocode failed");
+        const data = await res.json();
+
+        const addressEl = document.getElementById("detail-address");
+        const pincodeEl = document.getElementById("detail-pincode");
+        if (addressEl && data.display_name) addressEl.value = data.display_name;
+        if (pincodeEl && data.address && data.address.postcode) pincodeEl.value = data.address.postcode;
+
+        setStatus(t("locationFilled"));
+      } catch (err) {
+        setStatus(t("locationFailed"));
+      }
+    },
+    () => setStatus(t("locationDenied")),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 }
 
 // ============================================================
@@ -196,11 +240,13 @@ function openWishlist() {
   closeCart();
   document.getElementById("wishlist-drawer").classList.add("open");
   document.getElementById("wishlist-overlay").classList.add("open");
+  setBodyScrollLocked(true);
 }
 
 function closeWishlist() {
   document.getElementById("wishlist-drawer").classList.remove("open");
   document.getElementById("wishlist-overlay").classList.remove("open");
+  setBodyScrollLocked(false);
 }
 
 // ============================================================
@@ -341,8 +387,10 @@ function renderProducts() {
       <div class="product-size-row">
         <select class="size-select" data-id="${p.id}" aria-label="${t("selectSize")}">
           <option value="">${t("selectSize")}</option>
-          ${[0, 1, 2, 3, 4, 5, 6].map(s => `<option value="${s}">${s}</option>`).join("")}
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => `<option value="${s}">${s}</option>`).join("")}
+          <option value="other">${t("sizeOther")}</option>
         </select>
+        <input type="text" class="size-other-input" placeholder="${t("sizeOtherPlaceholder")}" style="display:none;">
       </div>
       <div class="product-footer">
         <span class="product-price">${CURRENCY_SYMBOL}${p.price}</span>
@@ -352,11 +400,35 @@ function renderProducts() {
   `;
   }).join("");
 
+  grid.querySelectorAll(".size-select").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const card = sel.closest(".product-card");
+      const otherInput = card ? card.querySelector(".size-other-input") : null;
+      if (otherInput) otherInput.style.display = sel.value === "other" ? "block" : "none";
+    });
+  });
+
   grid.querySelectorAll(".add-to-cart-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const card = btn.closest(".product-card");
       const sizeSelect = card ? card.querySelector(".size-select") : null;
-      addToCart(btn.dataset.id, sizeSelect ? sizeSelect.value : "", 1);
+      const otherInput = card ? card.querySelector(".size-other-input") : null;
+
+      let size = sizeSelect ? sizeSelect.value : "";
+      if (!size) {
+        alert(t("selectSizeRequired"));
+        return;
+      }
+      if (size === "other") {
+        size = otherInput ? otherInput.value.trim() : "";
+        if (!size) {
+          alert(t("enterSizeRequired"));
+          if (otherInput) otherInput.focus();
+          return;
+        }
+      }
+
+      addToCart(btn.dataset.id, size, 1);
     });
   });
 
@@ -432,8 +504,10 @@ function renderProductDetail() {
         <span>${t("selectSize")}</span>
         <select class="detail-size-select" id="detail-size-select">
           <option value="">--</option>
-          ${[0, 1, 2, 3, 4, 5, 6].map(s => `<option value="${s}">${s}</option>`).join("")}
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => `<option value="${s}">${s}</option>`).join("")}
+          <option value="other">${t("sizeOther")}</option>
         </select>
+        <input type="text" class="size-other-input" id="detail-size-other-input" placeholder="${t("sizeOtherPlaceholder")}" style="display:none;">
       </div>
 
       <div class="detail-qty">
@@ -478,9 +552,28 @@ function renderProductDetail() {
     qty += 1;
     qtyValueEl.textContent = qty;
   });
+
+  const detailSizeSelect = document.getElementById("detail-size-select");
+  const detailSizeOtherInput = document.getElementById("detail-size-other-input");
+  detailSizeSelect.addEventListener("change", () => {
+    detailSizeOtherInput.style.display = detailSizeSelect.value === "other" ? "block" : "none";
+  });
+
   document.getElementById("detail-add-btn").addEventListener("click", () => {
-    const sizeSelect = document.getElementById("detail-size-select");
-    addToCart(product.id, sizeSelect ? sizeSelect.value : "", qty);
+    let size = detailSizeSelect.value;
+    if (!size) {
+      alert(t("selectSizeRequired"));
+      return;
+    }
+    if (size === "other") {
+      size = detailSizeOtherInput.value.trim();
+      if (!size) {
+        alert(t("enterSizeRequired"));
+        detailSizeOtherInput.focus();
+        return;
+      }
+    }
+    addToCart(product.id, size, qty);
   });
 
   document.querySelector(".detail-wishlist-btn").addEventListener("click", () => {
@@ -543,15 +636,24 @@ function renderCart() {
 // ============================================================
 // CART DRAWER OPEN/CLOSE
 // ============================================================
+// Locks the underlying page while a drawer is open, so a touch-scroll
+// that runs out of room inside the drawer doesn't fall through and
+// scroll the store page behind it (the drawer itself scrolls instead).
+function setBodyScrollLocked(locked) {
+  document.body.style.overflow = locked ? "hidden" : "";
+}
+
 function openCart() {
   closeWishlist();
   document.getElementById("cart-drawer").classList.add("open");
   document.getElementById("cart-overlay").classList.add("open");
+  setBodyScrollLocked(true);
 }
 
 function closeCart() {
   document.getElementById("cart-drawer").classList.remove("open");
   document.getElementById("cart-overlay").classList.remove("open");
+  setBodyScrollLocked(false);
 }
 
 // ============================================================
@@ -581,6 +683,10 @@ function validateDeliveryDetails() {
   const details = getEnteredDetails();
   if (!details.name || !details.phone || !details.address) {
     alert("Please fill in your name, phone, and delivery address so we can deliver your order.");
+    return false;
+  }
+  if (!/^\d{6}$/.test(details.pincode)) {
+    alert("Please enter a valid 6-digit pincode so we can deliver your order.");
     return false;
   }
   return true;
@@ -982,6 +1088,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cart-overlay").addEventListener("click", closeCart);
   document.getElementById("checkout-btn").addEventListener("click", checkout);
   document.getElementById("clear-details-btn").addEventListener("click", clearSavedDetails);
+  const useLocationBtn = document.getElementById("use-location-btn");
+  if (useLocationBtn) useLocationBtn.addEventListener("click", useCurrentLocation);
   document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
     radio.addEventListener("change", updateCheckoutUI);
   });

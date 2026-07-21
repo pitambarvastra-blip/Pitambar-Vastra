@@ -15,11 +15,12 @@
     <div class="header-inner">
       <h1 class="logo">Pitambar Vastra</h1>
       <div class="header-actions">
+        <button id="lang-toggle" class="lang-toggle">हिं</button>
         <button id="wishlist-toggle" class="wishlist-toggle">
-          ♡ Wishlist <span id="wishlist-count">0</span>
+          ♡ <span data-i18n="wishlist">Wishlist</span> <span id="wishlist-count">0</span>
         </button>
         <button id="cart-toggle" class="cart-toggle">
-          🛒 Cart <span id="cart-count">0</span>
+          🛒 <span data-i18n="cart">Cart</span> <span id="cart-count">0</span>
         </button>
       </div>
     </div>
@@ -27,18 +28,22 @@
 
   <main>
     <section class="hero">
-      <h2>Welcome to Pitambar Vastra</h2>
-      <p>Quality products, delivered to your door.</p>
+      <h2 data-i18n="heroTitle">Welcome to Pitambar Vastra</h2>
+      <p data-i18n="heroSubtitle">Quality products, delivered to your door.</p>
     </section>
 
     <div class="trust-bar">
-      <div class="trust-item"><strong>🪷 3-Day Returns</strong>Unused items, full refund</div>
-      <div class="trust-item"><strong>🚚 ₹29 Shipping</strong>Flat rate, all orders</div>
-      <div class="trust-item"><strong>🔒 Secure Payment</strong>Powered by Razorpay</div>
+      <div class="trust-item"><strong>🪷 <span data-i18n="trustReturnsTitle">3-Day Returns</span></strong><span data-i18n="trustReturnsBody">Unused items, full refund</span></div>
+      <div class="trust-item"><strong>🚚 <span data-i18n="trustShippingTitle">₹29 Shipping</span></strong><span data-i18n="trustShippingBody">Flat rate, all orders</span></div>
+      <div class="trust-item"><strong>🔒 <span data-i18n="trustSecureTitle">Secure Payment</span></strong><span data-i18n="trustSecureBody">Powered by Razorpay</span></div>
     </div>
 
     <section class="product-grid" id="product-grid">
       <!-- product cards are injected here by js/cart.js -->
+    </section>
+
+    <section id="reviews-section">
+      <!-- reviews are injected here by js/cart.js -->
     </section>
   </main>
 
@@ -46,7 +51,7 @@
   <div id="wishlist-overlay" class="cart-overlay"></div>
   <aside id="wishlist-drawer" class="cart-drawer">
     <div class="cart-drawer-header">
-      <h3>Your Wishlist</h3>
+      <h3 data-i18n="wishlistTitle">Your Wishlist</h3>
       <button id="wishlist-close">&times;</button>
     </div>
     <div id="wishlist-items" class="cart-items"></div>
@@ -56,36 +61,49 @@
   <div id="cart-overlay" class="cart-overlay"></div>
   <aside id="cart-drawer" class="cart-drawer">
     <div class="cart-drawer-header">
-      <h3>Your Cart</h3>
+      <h3 data-i18n="cartTitle">Your Cart</h3>
       <button id="cart-close">&times;</button>
     </div>
     <div id="cart-items" class="cart-items"></div>
     <div class="delivery-details">
-      <h4>Delivery Details <span>(required to place your order)</span></h4>
-      <input type="text" id="detail-name" placeholder="Full name">
-      <input type="tel" id="detail-phone" placeholder="Phone number">
-      <textarea id="detail-address" placeholder="Delivery address" rows="2"></textarea>
+      <h4><span data-i18n="deliveryDetailsTitle">Delivery Details</span> <span data-i18n="deliveryDetailsNote">(required to place your order)</span></h4>
+      <input type="text" id="detail-name" placeholder="Full name" data-i18n-placeholder="placeholderName">
+      <input type="tel" id="detail-phone" placeholder="Phone number" data-i18n-placeholder="placeholderPhone">
+      <textarea id="detail-address" placeholder="Delivery address" data-i18n-placeholder="placeholderAddress" rows="2"></textarea>
       <div class="save-details-row">
-        <label><input type="checkbox" id="save-details-checkbox" checked> Remember my details for next time</label>
-        <button type="button" id="clear-details-btn">Clear</button>
+        <label><input type="checkbox" id="save-details-checkbox" checked> <span data-i18n="rememberDetails">Remember my details for next time</span></label>
+        <button type="button" id="clear-details-btn" data-i18n="clear">Clear</button>
+      </div>
+    </div>
+    <div class="customization-uploads">
+      <h4><span data-i18n="customizationTitle">Custom Design &amp; Sizing Help</span> <span data-i18n="customizationNote">(both optional)</span></h4>
+      <div class="upload-field">
+        <label for="custom-design-photo" data-i18n="customUploadLabel">Want a custom design? Upload a reference photo (optional)</label>
+        <input type="file" id="custom-design-photo" accept="image/*">
+        <img id="custom-design-preview" class="upload-preview" alt="Custom design preview">
+      </div>
+      <div class="upload-field">
+        <label for="laddu-gopal-photo" data-i18n="sizeHelpUploadLabel">Don't know the size? Upload your Laddu Gopal's photo and we'll pick the right size (optional)</label>
+        <input type="file" id="laddu-gopal-photo" accept="image/*">
+        <img id="laddu-gopal-preview" class="upload-preview" alt="Laddu Gopal photo preview">
       </div>
     </div>
     <div class="cart-footer">
       <div class="cart-line">
-        <span>Subtotal</span>
+        <span data-i18n="subtotal">Subtotal</span>
         <span id="cart-subtotal">₹0</span>
       </div>
       <div class="cart-line">
-        <span>Shipping</span>
+        <span data-i18n="shipping">Shipping</span>
         <span id="cart-shipping">₹0</span>
       </div>
       <div class="cart-total">
-        <span>Total</span>
+        <span data-i18n="total">Total</span>
         <span id="cart-total">₹0</span>
       </div>
       <div class="payment-method-row">
-        <label><input type="radio" name="payment-method" value="online" checked> Pay Online</label>
-        <label><input type="radio" name="payment-method" value="cod"> Cash on Delivery</label>
+        <label><input type="radio" name="payment-method" value="online" checked> <span data-i18n="payOnline">Pay Online</span></label>
+        <label><input type="radio" name="payment-method" value="cod"> <span data-i18n="cashOnDelivery">Cash on Delivery</span></label>
       </div>
       <button id="checkout-btn" class="checkout-btn">Pay Now</button>
       <p class="checkout-note" id="checkout-note">
@@ -99,10 +117,12 @@
   <div id="order-success-overlay" class="cart-overlay"></div>
   <div id="order-success-modal" class="order-success-modal">
     <div class="order-success-icon">✅</div>
-    <h3>Order Placed Successfully!</h3>
-    <p>Your order ID is <strong id="order-success-id"></strong></p>
-    <p>We've received your order and will contact you if needed. Thank you for shopping with us!</p>
-    <button id="order-success-close" class="checkout-btn">Continue Shopping</button>
+    <h3 data-i18n="orderSuccessTitle">Order Placed Successfully!</h3>
+    <p><span data-i18n="orderIdLabel">Your order ID is</span> <strong id="order-success-id"></strong></p>
+    <p data-i18n="orderSuccessBody">We've received your order and will contact you if needed. Thank you for shopping with us!</p>
+    <p class="order-track-note" data-i18n="trackWhatsappLine">You can track your order anytime — just message us on WhatsApp and we'll let you know where it is.</p>
+    <button id="order-track-whatsapp-btn" class="order-track-whatsapp-btn" data-i18n="trackWhatsappBtn">💬 Track My Order on WhatsApp</button>
+    <button id="order-success-close" class="checkout-btn" data-i18n="continueShopping">Continue Shopping</button>
   </div>
 
   <footer class="site-footer">
@@ -113,20 +133,21 @@
       <p>Email: pitambarvastra@gmail.com</p>
     </div>
     <p class="footer-policy">
-      <strong>Returns:</strong> Full refund within 3 days of delivery if you're not happy with your purchase, as long as the item is unused and in its original condition.
-      <br><strong>Shipping:</strong> Flat ₹29 on every order.
+      <strong data-i18n="footerReturnsLabel">Returns:</strong> <span data-i18n="footerReturnsBody">Full refund within 3 days of delivery if you're not happy with your purchase, as long as the item is unused and in its original condition.</span>
+      <br><strong data-i18n="footerShippingLabel">Shipping:</strong> <span data-i18n="footerShippingBody">Flat ₹29 on every order.</span>
     </p>
     <p class="footer-links">
-      <a href="privacy-policy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html">Terms &amp; Conditions</a>
+      <a href="privacy-policy.html" data-i18n="privacyPolicy">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html" data-i18n="termsConditions">Terms &amp; Conditions</a>
     </p>
     <p class="footer-links">
-      <button type="button" id="whatsapp-contact-btn" class="share-btn">💬 Message us on WhatsApp</button>
+      <button type="button" id="whatsapp-contact-btn" class="share-btn">💬 <span data-i18n="messageWhatsapp">Message us on WhatsApp</span></button>
     </p>
     <p>&copy; <span id="year"></span> Pitambar Vastra</p>
   </footer>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="js/products.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/cart.js"></script>
 </body>
 </html>

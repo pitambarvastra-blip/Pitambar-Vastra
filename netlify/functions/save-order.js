@@ -12,6 +12,10 @@ function ordersStore() {
 
 exports.handler = async function (event) {
   try {
+    if (!event.body || Buffer.byteLength(event.body) > 12 * 1024 * 1024) {
+      return { statusCode: 413, body: JSON.stringify({ error: "Order is too large to submit." }) };
+    }
+
     const order = JSON.parse(event.body);
 
     if (!order.items || order.items.length === 0) {
@@ -26,13 +30,20 @@ exports.handler = async function (event) {
       orderId,
       placedAt: new Date().toISOString(),
       status: "New",
-      items: order.items,
+      items: order.items, // each item may include an optional "size"
       subtotal: order.subtotal,
       shipping: order.shipping,
       total: order.total,
       paymentMethod: order.paymentMethod, // "online" or "cod"
       paymentId: order.paymentId || null,
-      customer: order.customer
+      customer: order.customer,
+      // Optional customer uploads (compressed images as data URLs, client-side)
+      customizationImage: typeof order.customizationImage === "string" && order.customizationImage.startsWith("data:image/")
+        ? order.customizationImage
+        : null,
+      sizeHelpImage: typeof order.sizeHelpImage === "string" && order.sizeHelpImage.startsWith("data:image/")
+        ? order.sizeHelpImage
+        : null
     };
 
     const store = ordersStore();

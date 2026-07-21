@@ -35,6 +35,12 @@
           <button id="orders-refresh-btn" class="wishlist-toggle">Refresh</button>
         </div>
         <div id="orders-list"></div>
+
+        <div class="orders-header-row" style="margin-top:40px;">
+          <h1>Reviews</h1>
+          <button id="reviews-refresh-btn" class="wishlist-toggle">Refresh</button>
+        </div>
+        <div id="reviews-admin-list"></div>
       </div>
 
     </div>
@@ -49,6 +55,15 @@
     const CURRENCY_SYMBOL = "₹";
     let adminPassword = "";
 
+    // Order/review fields come from public, unauthenticated form submissions —
+    // escape before inserting into innerHTML so a crafted name/address/review
+    // can't run script in this admin page.
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str == null ? "" : String(str);
+      return div.innerHTML;
+    }
+
     function renderOrders(orders) {
       const listEl = document.getElementById("orders-list");
       if (orders.length === 0) {
@@ -59,11 +74,11 @@
       listEl.innerHTML = orders.map(o => `
         <div class="order-card">
           <div class="order-card-top">
-            <span class="order-id">${o.orderId}</span>
+            <span class="order-id">${escapeHtml(o.orderId)}</span>
             <span class="order-date">${new Date(o.placedAt).toLocaleString("en-IN")}</span>
           </div>
           <div class="order-items">
-            ${o.items.map(i => `<div>${i.name} x${i.qty} — ${CURRENCY_SYMBOL}${i.price * i.qty}</div>`).join("")}
+            ${o.items.map(i => `<div>${escapeHtml(i.name)}${i.size ? ` (Size ${escapeHtml(i.size)})` : ""} x${i.qty} — ${CURRENCY_SYMBOL}${i.price * i.qty}</div>`).join("")}
           </div>
           <div class="order-totals">
             Subtotal: ${CURRENCY_SYMBOL}${o.subtotal} &nbsp;|&nbsp;
@@ -72,15 +87,70 @@
           </div>
           <div class="order-payment">
             Payment: ${o.paymentMethod === "cod" ? "Cash on Delivery" : "Paid Online"}
-            ${o.paymentId ? ` (ID: ${o.paymentId})` : ""}
+            ${o.paymentId ? ` (ID: ${escapeHtml(o.paymentId)})` : ""}
           </div>
           <div class="order-customer">
-            <strong>${o.customer.name}</strong><br>
-            ${o.customer.phone}<br>
-            ${o.customer.address}
+            <strong>${escapeHtml(o.customer.name)}</strong><br>
+            ${escapeHtml(o.customer.phone)}<br>
+            ${escapeHtml(o.customer.address)}
+          </div>
+          ${o.customizationImage || o.sizeHelpImage ? `
+            <div class="order-uploads">
+              ${o.customizationImage ? `<div class="order-upload-item"><span>Custom design reference:</span><img src="${o.customizationImage}" alt="Custom design reference"></div>` : ""}
+              ${o.sizeHelpImage ? `<div class="order-upload-item"><span>Laddu Gopal photo (sizing help):</span><img src="${o.sizeHelpImage}" alt="Laddu Gopal sizing photo"></div>` : ""}
+            </div>
+          ` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderReviewsAdmin(reviews) {
+      const listEl = document.getElementById("reviews-admin-list");
+      if (reviews.length === 0) {
+        listEl.innerHTML = `<p class="cart-empty">No reviews yet.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = reviews.map(r => `
+        <div class="order-card">
+          <div class="order-card-top">
+            <span class="order-id">${escapeHtml(r.name || "Anonymous")}${r.rating ? " — " + "★".repeat(r.rating) + "☆".repeat(5 - r.rating) : ""}</span>
+            <span class="order-date">${new Date(r.createdAt).toLocaleString("en-IN")}</span>
+          </div>
+          ${r.text ? `<div class="order-items">${escapeHtml(r.text)}</div>` : ""}
+          ${r.image ? `<div class="order-uploads"><img src="${r.image}" alt="Review photo"></div>` : ""}
+          ${r.video ? `<div class="order-uploads"><video src="${r.video}" controls style="max-width:220px;"></video></div>` : ""}
+          ${r.videoLink ? `<div class="order-payment"><a href="${escapeHtml(r.videoLink)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.videoLink)}</a></div>` : ""}
+          <div class="order-customer">
+            <button type="button" class="remove-btn" data-review-id="${escapeHtml(r.reviewId)}">Delete review</button>
           </div>
         </div>
       `).join("");
+
+      listEl.querySelectorAll("[data-review-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this review? This cannot be undone.")) return;
+          try {
+            await fetch("/.netlify/functions/delete-review", {
+              method: "POST",
+              body: JSON.stringify({ password: adminPassword, reviewId: btn.dataset.reviewId })
+            });
+            loadReviewsAdmin();
+          } catch (err) {
+            alert("Could not delete review. Please try again.");
+          }
+        });
+      });
+    }
+
+    async function loadReviewsAdmin() {
+      try {
+        const res = await fetch("/.netlify/functions/get-reviews");
+        const data = await res.json();
+        renderReviewsAdmin(data.reviews || []);
+      } catch (err) {
+        // best-effort — orders are the primary content on this page
+      }
     }
 
     async function loadOrders() {
@@ -99,6 +169,7 @@
         document.getElementById("orders-login").style.display = "none";
         document.getElementById("orders-content").style.display = "block";
         renderOrders(data.orders);
+        loadReviewsAdmin();
       } catch (err) {
         errEl.textContent = "Something went wrong. Please try again.";
       }
@@ -112,6 +183,7 @@
       if (e.key === "Enter") document.getElementById("orders-login-btn").click();
     });
     document.getElementById("orders-refresh-btn").addEventListener("click", loadOrders);
+    document.getElementById("reviews-refresh-btn").addEventListener("click", loadReviewsAdmin);
   </script>
 </body>
 </html>
